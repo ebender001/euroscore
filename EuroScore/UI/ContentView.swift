@@ -28,13 +28,7 @@ struct ContentView: View {
     @State private var urgencyValue = "Elective"
     @State private var weightOfInterventionValue = "CABG only"
     @State private var ageString = ""
-    @State private var keyboardToolbarRefresh = UUID()
-    
-    private enum Field: Hashable {
-        case age
-    }
-
-    @FocusState private var focusedField: Field?
+    @FocusState private var ageFieldFocused: Bool
     
     let creatinineClearance = [">85", "50-85", "<50", "Dialysis"]
     let nyhaClass = ["I", "II", "III", "IV"]
@@ -354,27 +348,21 @@ struct ContentView: View {
                 Spacer()
                 TextField("years", text: $ageString)
                     .keyboardType(.numberPad)
-                    .focused($focusedField, equals: .age)
+                    .focused($ageFieldFocused)
                     .multilineTextAlignment(.trailing)
                     .textFieldStyle(.roundedBorder)
-                    // Workaround for SwiftUI occasionally dropping the keyboard toolbar on re-focus
-                    .id(keyboardToolbarRefresh)
-                    .onChange(of: focusedField) { _, newValue in
-                        if newValue == .age {
-                            keyboardToolbarRefresh = UUID()
-                        }
-                    }
                     .onChange(of: ageString) {
                         euroscoreVM.euroscore.age = Int(ageString) ?? 0
                     }
-                    .toolbar {
-                        ToolbarItemGroup(placement: .keyboard) {
-                            Spacer()
-                            Button("Done") {
-                                focusedField = nil
-                            }
-                        }
-                    }
+                Button {
+                    ageFieldFocused = false
+                } label: {
+                    Image(systemName: "checkmark.circle")
+                }
+                .opacity(ageFieldFocused ? 1 : 0)
+                .allowsHitTesting(!ageFieldFocused)
+                .scaleEffect(!ageFieldFocused ? 0.9 : 1.4)
+                .animation(.spring(response: 0.35, dampingFraction: 0.7), value: !ageFieldFocused)
             }
             
             Toggle("Female Gender:", isOn: $euroscoreVM.euroscore.female)
