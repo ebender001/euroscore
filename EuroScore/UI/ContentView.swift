@@ -28,8 +28,13 @@ struct ContentView: View {
     @State private var urgencyValue = "Elective"
     @State private var weightOfInterventionValue = "CABG only"
     @State private var ageString = ""
+    @State private var keyboardToolbarRefresh = UUID()
     
-    @FocusState private var ageFieldFocused: Bool
+    private enum Field: Hashable {
+        case age
+    }
+
+    @FocusState private var focusedField: Field?
     
     let creatinineClearance = [">85", "50-85", "<50", "Dialysis"]
     let nyhaClass = ["I", "II", "III", "IV"]
@@ -80,7 +85,6 @@ struct ContentView: View {
                         showMenu.toggle()
                     } label: {
                         Image(systemName: "list.bullet")
-                        
                     }
                 }
             }
@@ -350,24 +354,24 @@ struct ContentView: View {
                 Spacer()
                 TextField("years", text: $ageString)
                     .keyboardType(.numberPad)
-                    .focused($ageFieldFocused)
+                    .focused($focusedField, equals: .age)
                     .multilineTextAlignment(.trailing)
                     .textFieldStyle(.roundedBorder)
+                    // Workaround for SwiftUI occasionally dropping the keyboard toolbar on re-focus
+                    .id(keyboardToolbarRefresh)
+                    .onChange(of: focusedField) { _, newValue in
+                        if newValue == .age {
+                            keyboardToolbarRefresh = UUID()
+                        }
+                    }
                     .onChange(of: ageString) {
                         euroscoreVM.euroscore.age = Int(ageString) ?? 0
                     }
-                    .safeAreaInset(edge: .bottom) {
-                        if UIDevice.current.userInterfaceIdiom != .pad {
-                            if ageFieldFocused {
-                                HStack {
-                                    Spacer()
-                                    Button("Done") {
-                                        ageFieldFocused = false
-                                    }
-                                    .padding()
-                                    .buttonStyle(.borderedProminent)
-                                }
-                                .background(.clear)
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button("Done") {
+                                focusedField = nil
                             }
                         }
                     }
