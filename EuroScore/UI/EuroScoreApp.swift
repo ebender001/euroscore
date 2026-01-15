@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct EuroScoreApp: App {
+    @StateObject private var euroscoreVM = EuroscoreViewModel()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(euroscoreVM)
         }
     }
 }
